@@ -1,0 +1,7 @@
+simSummary NEWS
+
+CHANGES IN VERSION 0.1.0 (2012-05-06)
+
+  * Added vignette and CITATION file with a stub entry. [2012-05-06]
+
+  * Initial implementation [2012-04-08]

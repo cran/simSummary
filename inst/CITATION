@@ -1,0 +1,14 @@
+
+bibentry(
+         bibtype="Article",
+         title="{simSummary: Simulation summary}",
+         author=as.person("G. Gorjanc"),
+         journal="?",
+         year="?",
+         volume="?",
+         number="?",
+         pages="?",
+         url="?",
+         key="Gorjanc:2012:simSummary"
+        )
+

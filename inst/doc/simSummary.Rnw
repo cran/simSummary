@@ -1,0 +1,145 @@
+
+%\VignetteIndexEntry{Simulation summary}
+%\VignettePackage{simSummary}
+%\VignetteKeywords{simulation, summary, statistics}
+
+\documentclass[a4paper]{report}
+%\usepackage{RJournal}
+\usepackage{hyperref}
+\newcommand{\pkg}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\usepackage{Sweave}
+\usepackage[round]{natbib}
+\bibliographystyle{abbrvnat}
+
+\begin{document}
+
+%\begin{article}
+
+\title{simSummary: Simulation summary}
+\author{by Gregor Gorjanc}
+
+\maketitle
+
+\abstract{\pkg{simSummary} is a small utility package which eases the process of summarizing simulation results. Simulations often produce intermediate results - some focal statistics that need to be summarized over several scenarios and many replications. This step is in principle easy, but tedious. The package \pkg{simSummary} fills this niche by providing a generic way of summarizing the focal statistics of simulations. The useR must provide properly structured input, holding focal statistics, and then the summary step can be performed with one line of code, calling the \code{simSummary} function.}
+
+\section{Introduction}
+
+Simulations are often used to study complex processes. In statistics, simulations are often used to study the uncertainty of estimates which is due to the sampling variability of their inputs (data). Almost any simulation can be divided into two parts. The first part is to carry out a simulation of a complex process. This part differs from simulation to simulation in essential ways. Often some focal statistics are computed to summarize the simulated process, e.g., the mean. To capture the variability of a studied process, several replications are created and for each replication the focal statistics are saved. The second part of a simulation is to summarize the focal statistics collected. This is in principle a very simple task, though often a tedious one due to the need to summarize the focal statistics over several simulation scenarios and many replications. Since this task is structurally always the same and is independent of the simulation, there is an open niche for a generic tool. \pkg{simSummary} is a small utility package with a single function of the same name (\code{simSummary}), which tries to fulfill this need by easing the process of summarizing focal statistics over simulation scenarios and replications.
+
+\section{Description with example}
+
+A simple example will be used to demonstrate the use of the \pkg{simSummary} package. Say we are studying lamb growth around 60 days using a linear regression of body weight $\left(y\right)$ on age $\left(x\right)$:
+
+\[y_i = \alpha + \beta (x_i - 60) + e_i,\]
+
+where $\alpha$ is an intercept (the average lamb body weight at 60 days) and $\beta$ is a slope (the average lamb growth rate or daily gain) of a regression line. We would like to quantify the variability of some focal statistics in relation to the sample size. Three scenarios with differing numbers of observations will be tested, and the focal statistics will be the estimates of the parameters $\hat{\alpha}$ and $\hat{\beta}$ and the coefficient of determination $\hat{R}^2$. This is not a very complex simulation, but nicely shows the usage of the \pkg{simSummary} package.
+
+First we need to set the parameters of the studied process and simulation.
+
+<<parameters>>=
+## Process (lamb growth) parameters
+xMin  <- 40            ## minimal age
+xMax  <- 80            ## maximal age
+alpha <- 20            ## ave. weight at 60 days
+beta  <- 0.35          ## growth rate
+sdE   <- 2             ## residual variation
+ 
+## Simulation parameters
+nY <- c(10, 100, 1000) ## scenarios
+nS <- length(nY)       ## no. scenarios
+nR <- 100              ## no. replications
+@
+
+Then, containers for the focal statistics need to be set up. There are several ways to set up such containers, but for the use of the \pkg{simSummary} package, we must follow two rules:
+\begin{itemize}
+  \item set up the ``outer'' list of length equal to the number of replications (\code{nR}) and
+  \item each element of an ``outer'' list must also be a list (the ``inner'' list).
+\end{itemize}
+
+For the lamb growth simulation, the two parameter estimates and the coefficient of determination for each scenario will be stored in the corresponding ``inner'' list. The way the focal statistics are stored in the ``inner'' list is free as long as the elements of this list are either numeric vectors, matrices, or arrays. These three object classes should cover the majority of needs.
+
+<<containers>>=
+## Outer list
+sim <- vector(mode="list", length=nR)
+## Inner list
+simI <- vector(mode="list", length=2)
+names(simI) <- c("coef", "R2")
+simI$coef <- matrix(nrow=2, ncol=nS)
+simI$R2   <- matrix(nrow=1, ncol=nS)
+colnames(simI$coef) <- colnames(simI$R2) <- nY
+rownames(simI$coef) <- c("alpha", "beta")
+@
+
+The simulation of the lamb growth process could be performed as shown below, which completes the first part of the simulation. In order to show the structure of the ``inner'' lists, the focal statistics collected from the first two replications are printed out.
+
+<<simulation>>=
+for(i in 1:nR) {
+  sim[[i]] <- simI
+  for(j in 1:nS) {
+    x <- runif(n=nY[j], min=xMin, max=xMax) - 60
+    y <- alpha + beta * x + rnorm(n=nY[j], sd=sdE)
+    tmp <- lm(y ~ x)
+    sim[[i]]$coef[, j] <- coef(tmp)
+    sim[[i]]$R2[j] <- summary(tmp)$r.squared
+  }
+}
+sim[1:2]
+@
+
+The second part of the simulation is to summarize the collected focal statistics over the simulation scenarios and replications. With the use of the \code{simSummary} function, this is very easy. If the interest is in means and standard deviations, the following three lines of code will: i) install the package from CRAN, ii) load the package, and iii) summarize the simulation.
+
+<<summary>>=
+# install.packages(pkg="simSummary")
+library(package="simSummary")
+simSummary(x=sim, FUN=c("mean", "sd"))
+@
+
+The only two requirements for the \code{simSummary} function are i) properly structured input (an ``outer'' list of ``inner'' lists holding numeric vectors, matrices, or arrays) and ii) the summary functions must return a single value, such as \code{length}, \code{mean}, etc., but not \code{range}, \code{table}, etc. An error message is thrown when any of these two requirements is not met. The output of \code{simSummary} is also an ``outer'' list of ``inner'' lists, where its ``inner'' lists have the same structure as in the input. There is one instance of an ``inner'' list for each summarizing function.
+
+Simulations are often time consuming, and often run as a (parallel) batch job. The summary step can then be performed when all jobs finish. However, to obtain preliminary results, a script can be set up that creates the structured input and fills it with the available values. Missing values can then be accommodated in the \code{simSummary} function with the argument \code{na.rm=TRUE} which is passed to the summarizing functions.
+
+<<summary2>>=
+## Mimick simulation in progress
+sim[[100]]$coef[] <- NA
+sim[[100]]$R2[]   <- NA
+simSummary(x=sim, FUN=c("nobs", "mean"),
+           na.rm=TRUE)
+@
+
+\section{Development}
+
+The published version of the \pkg{simSummary} package is hosted at CRAN\footnote{\url{http://CRAN.R-project.org/package=simSummary}}. For the development \pkg{inlinedocs} package, \citep{Inlinedocs:2011} is used to mix the code and documentation in one file, while the \pkg{svUnit} package \citep{svUnit:2012} is used for unit testing. Any useR can run the package unit tests with \code{simSummary\_unitTests()}. Contributions to the package are welcome.
+
+\section{Summary}
+
+\pkg{simSummary} is a small utility package which eases the process of summarizing selected focal statistics in simulations. The only effort needed is to properly structure the input, while the summary step is easy to perform. By using the \pkg{simSummary} package useRs can devote more time to the analysis of simulation results than to the tedious development of simulation specific summarizing code.
+
+\section*{R session information}
+
+<<sessionInfo>>=
+sessionInfo()
+@
+
+%\bibliography{example}
+
+\begin{thebibliography}{1}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{{\tt #1}}\fi
+
+\bibitem[Inlinedocs development team(2011)]{Inlinedocs:2011}
+Inlinedocs development team.
+\newblock inlinedocs: Convert inline comments to documentation. 2011.
+\newblock URL \url{http://CRAN.R-project.org/package=inlinedocs}.
+
+\bibitem[Grosjean(2012)]{svUnit:2012}
+Grosjean, P.
+\newblock SciViews-R: A GUI API for R. UMONS, Mons, Belgium. 2012.
+\newblock URL \url{http://www.sciviews.org/SciViews-R}.
+
+\end{thebibliography}
+
+%\end{article}
+
+\end{document}

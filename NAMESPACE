@@ -1,0 +1,19 @@
+### NAMESPACE
+###------------------------------------------------------------------------
+
+## Exported functions
+export(
+       ## Main functions
+       simSummary,
+
+       ## Supporting functions
+
+       ## Unit testing
+       simSummary_unitTests
+       )
+
+## Need method for number of observations
+importFrom(gdata, nobs)
+
+###------------------------------------------------------------------------
+### NAMESPACE ends here

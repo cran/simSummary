@@ -1,0 +1,13 @@
+adab29a18cb5fa490b45278259cf1be7 *DESCRIPTION
+9553a60e5db467893f67a25c49261042 *NAMESPACE
+ada8f38d368482d57a1490541b5e909a *R/simSummary.R
+edff6a292968915e2a47a830c063cf65 *R/simSummary.unitTests.R
+b4f3d68c8e6a91d9d5bebd9364d633d3 *inst/CITATION
+41980af38fca3cc667246b0ef3c7cd8a *inst/NEWS
+2a3a5f4adf6537833ed068fc95972276 *inst/doc/simSummary.Rnw
+32d40ad4182fd608758e2ef20aab400d *inst/doc/simSummary.pdf
+607854574d75a6b9c3f6f9311f6710af *inst/unitTests/runit.test.simSummary.R
+423e5f2be61cee7e6771141c69a31dfc *man/simSummary-package.Rd
+6feb0c25db22dcac7f21d4bd281ad493 *man/simSummary.Rd
+e3eca9579709f742c404c515153de4d2 *man/simSummary_unitTests.Rd
+2a3a5f4adf6537833ed068fc95972276 *vignettes/simSummary.Rnw
